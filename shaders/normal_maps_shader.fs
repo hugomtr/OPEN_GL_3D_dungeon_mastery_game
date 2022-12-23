@@ -11,28 +11,56 @@ in VS_OUT {
 
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
+uniform sampler2D depthMap;
+
+uniform vec3 lightColor;
+uniform float height_scale;
+
+vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir){
+    const int numLayers = 20;
+    float layerDepth = 1.0 / numLayers;
+    float currentLayerDepth = 0.0;
+    vec2 P = viewDir.xy * height_scale;
+    vec2 deltaTexCoords = P / numLayers;
+    
+    vec2 currentTexCoords = texCoords;
+    float currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+    while (currentLayerDepth < currentDepthMapValue){
+        currentTexCoords -= deltaTexCoords;
+        currentDepthMapValue = texture(depthMap, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+    }
+    return currentTexCoords;
+}
 
 void main()
 {           
-     // obtain normal from normal map in range [0,1]
-    vec3 normal = texture(normalMap, fs_in.TexCoords).rgb;
-    // transform normal vector to range [-1,1]
-    normal = normalize(normal * 2.0 - 1.0);  // this normal is in tangent space
-   
-    // get diffuse color
-    vec3 color = texture(diffuseMap, fs_in.TexCoords).rgb;
+    // offset texture coordinates with Parallax Mapping
+    vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
+    vec2 texCoords = ParallaxMapping(fs_in.TexCoords, viewDir);
+
+    // if(texCoords.x > 1.02 || texCoords.y > 1.05 || texCoords.x < -0.02 || texCoords.y < -0.02)
+    //     discard;
+
+    // then sample textures with new texture coords and according to normal vector direction
+    vec3 normal = texture(normalMap, texCoords).xyz;
+    normal = normalize(normal * 2.0 - 1.0);
+
+    // Blinn Phong lighting
+    vec3 color = texture(diffuseMap,texCoords).xyz;
     // ambient
-    vec3 ambient = 0.1 * color;
+    vec3 ambient = 0.15 * color;
     // diffuse
     vec3 lightDir = normalize(fs_in.TangentLightPos - fs_in.TangentFragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * color;
+    vec3 diffuse = diff * lightColor;
     // specular
-    vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
-    vec3 halfwayDir = normalize(lightDir + viewDir);  
-    float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
+    float spec = 0.0;
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    spec = pow(max(dot(halfwayDir, normal), 0.0),32.0);
+    vec3 specular = vec3(0.5f) * spec * lightColor;
 
-    vec3 specular = vec3(0.2) * spec;
-    FragColor = vec4(ambient + diffuse + specular, 1.0);
+    vec3 lighting = (ambient + diffuse + specular) * color;
+    
+    FragColor = vec4(lighting, 1.0);
 }

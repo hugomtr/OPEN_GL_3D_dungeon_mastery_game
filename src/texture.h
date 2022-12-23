@@ -7,14 +7,21 @@
 #include <glm/glm.hpp>
 
 #include <iostream>
+#include <vector>
 
 struct Texture {
-    unsigned int id;
+    uint id;
+    uint normal_id;
+    uint depth_id;
+    std::vector<uint> ids;
     std::string type;
     std::string path;
     Texture() = default;
     Texture(const char* filename,GLint mode);
+    Texture(const char* filename1,const char* filename2,const char* filename3,GLint mode);
     ~Texture() = default;
 };
+
+
 
 #endif

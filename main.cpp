@@ -50,7 +50,7 @@ int main()
 #endif
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "DungeonMastery", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -95,13 +95,13 @@ int main()
     // -----------
     float accumulateTime = 0.0;
 
-    Texture floorTex("../ressources/texture/ground_Color.jpg",GL_CLAMP_TO_EDGE);
-    Texture floorTexNormal("../ressources/texture/ground_Normal.jpg",GL_CLAMP_TO_EDGE);
-    Texture cubeTex("../ressources/texture/Rock_Color.jpg",GL_CLAMP_TO_EDGE);
-    Texture cubeTexNormal("../ressources/texture/Rock_Normal.jpg",GL_CLAMP_TO_EDGE);
-    Texture roofTex("../ressources/texture/roof_Color.jpg",GL_CLAMP_TO_EDGE);
-    Texture roofTexNormal("../ressources/texture/roof_Normal.jpg",GL_CLAMP_TO_EDGE);
-    std::vector<uint> texture_maze_ids{floorTex.id,floorTexNormal.id,cubeTex.id,cubeTexNormal.id}; 
+    Texture floorTex("../ressources/texture/ground_Color.jpg","../ressources/texture/ground_Normal.jpg","../ressources/texture/ground_Depth.jpg",GL_CLAMP_TO_EDGE);
+    Texture cubeTex("../ressources/texture/Rock_Color.jpg","../ressources/texture/Rock_Normal.jpg","../ressources/texture/Rock_Depth.jpg",GL_CLAMP_TO_EDGE);
+    Texture roofTex("../ressources/texture/roof_Color.jpg","../ressources/texture/roof_Normal.jpg","../ressources/texture/roof_Depth.jpg",GL_CLAMP_TO_EDGE);
+    std::vector<uint> floorTexIds = {floorTex.id,floorTex.normal_id,floorTex.depth_id};
+    std::vector<uint> cubeTexIds = {cubeTex.id,cubeTex.normal_id,cubeTex.depth_id};
+    std::vector<uint> roofTexIds = {roofTex.id,roofTex.normal_id,roofTex.depth_id};
+    std::vector<std::vector<uint>> texture_maze_ids{floorTex.ids,cubeTex.ids,roofTex.ids}; 
 
     while(!glfwWindowShouldClose(window))
     {
@@ -112,7 +112,7 @@ int main()
 
         float currentFrame = static_cast<float>(glfwGetTime());
         if (accumulateTime > 0.2) {
-            //show_gpu_memory();
+            show_gpu_memory();
             accumulateTime = 0.0;
         }
         deltaTime = currentFrame - lastFrame;
@@ -161,7 +161,7 @@ void processInput(GLFWwindow *window){
 void processMovement(GLFWwindow *window)
 {
   // clavier mouvement
-    float cameraSpeed = 1.0f;
+    float cameraSpeed = 0.1f;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.Position += cameraSpeed * camera.Front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

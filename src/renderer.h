@@ -12,6 +12,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "texture.h"
+#include "map.h"
 
 #include <iostream>
 
@@ -19,8 +20,8 @@ class Renderer {
 public:
     Renderer(Camera & _camera): camera(_camera) {};
     ~Renderer() = default;
-    void renderMaze(Shader &shader,std::vector<uint> &texture_ids);
-    void renderObjects(Shader &shader,std::vector<uint> &texture_ids);
+    void renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids);
+    void renderObjects(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids);
     void renderCube();
     void renderQuad();
     void renderTestQuad();

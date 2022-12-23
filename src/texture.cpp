@@ -40,3 +40,10 @@ unsigned int loadTexture(const char* filename,GLint mode = GL_CLAMP_TO_EDGE)
 Texture::Texture(const char* filename,GLint mode = GL_CLAMP_TO_EDGE){
     id = loadTexture(filename,mode);
 }
+
+Texture::Texture(const char* filename1,const char* filename2,const char* filename3,GLint mode){
+    id = loadTexture(filename1,mode);
+    normal_id = loadTexture(filename2,mode);
+    depth_id = loadTexture(filename3,mode);
+    ids = {id,normal_id,depth_id};
+}

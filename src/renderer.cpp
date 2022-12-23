@@ -1,5 +1,4 @@
 #include "renderer.h"
-#include "map.h"
 
 void triangle_tangent_calc(glm::vec3 pos1,glm::vec3 pos2,glm::vec3 pos3,glm::vec2 uv1,glm::vec2 uv2,glm::vec2 uv3,glm::vec3 &tangent){
     glm::vec3 edge1 = pos2 - pos1;
@@ -163,7 +162,7 @@ void Renderer::renderQuad()
 
 // by convention textures_list will be order given the following 
 // 
-void Renderer::renderMaze(Shader &normal_shader,std::vector<uint> &texture_ids)
+void Renderer::renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids)
 {
     Map* map = Map::getInstance();
 
@@ -175,24 +174,24 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<uint> &texture_ids)
     view = camera.GetViewMatrix();
     projection = camera.GetProjectionMatrix();
 
-    uint floorTexId = texture_ids[0];
-    uint floorTexNormalId = texture_ids[1];
-    uint cubeTexId = texture_ids[2];
-    uint cubeTexNormalId = texture_ids[3];
-    uint roofTexId = texture_ids[4];
-    uint roofTexNormalId = texture_ids[5];
-    
+    std::vector<uint> floorTexIds = texture_ids[0];
+    std::vector<uint> cubeTexIds = texture_ids[1];
+    std::vector<uint> roofTexIds = texture_ids[2];
+
     normal_shader.use();
     normal_shader.setInt("diffuseMap", 0);
     normal_shader.setInt("normalMap", 1);
+    normal_shader.setInt("depthMap", 2);
 
     normal_shader.setMat4f("projection", glm::value_ptr(projection));
     normal_shader.setMat4f("view", glm::value_ptr(view));
 
-    model = glm::mat4(1.0f);
-    normal_shader.setMat4f("model", glm::value_ptr(model));
     normal_shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
     normal_shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+
+    normal_shader.setVec3("lightColor", glm::value_ptr(glm::vec3(1.0f)));
+    normal_shader.setFloat("height_scale", 0.1f);
+
     // block inside
     for(int i = 0; i < n_rows; i++){
         for (int j = 0;j < n_columns; j++){
@@ -203,9 +202,11 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<uint> &texture_ids)
                 model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),0.0f,static_cast<float>(2*j+1)));
                 normal_shader.setMat4f("model", glm::value_ptr(model));
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, cubeTexId);
+                glBindTexture(GL_TEXTURE_2D, cubeTexIds[0]);
                 glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, cubeTexNormalId);
+                glBindTexture(GL_TEXTURE_2D, cubeTexIds[1]);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, cubeTexIds[2]);
                 this->renderCube();
                 glDisable(GL_CULL_FACE);
             } else {
@@ -214,16 +215,25 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<uint> &texture_ids)
                 model = glm::scale(model, glm::vec3(2.0f));
                 model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),-1.0f,static_cast<float>(2*j+1)));
                 normal_shader.setMat4f("model", glm::value_ptr(model));
-                glBindTexture(GL_TEXTURE_2D, floorTexId);
-                glBindTexture(GL_TEXTURE_2D, floorTexNormalId);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, floorTexIds[0]);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, floorTexIds[1]);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, floorTexIds[2]);
                 this->renderQuad();
                 // roof
                 model = glm::mat4(1.0f);
                 model = glm::scale(model, glm::vec3(2.0f));
                 model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),1.0f,static_cast<float>(2*j+1)));
+                model = glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,0.0f,0.0f));
                 normal_shader.setMat4f("model", glm::value_ptr(model));
-                glBindTexture(GL_TEXTURE_2D, roofTexId);
-                glBindTexture(GL_TEXTURE_2D, roofTexNormalId);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, roofTexIds[0]);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, roofTexIds[1]);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, roofTexIds[2]);
                 this->renderQuad();
             }     
         }
@@ -259,7 +269,7 @@ void Renderer::renderTestQuad()
     glBindVertexArray(0);
 }
 
-void Renderer::renderObjects(Shader &normal_shader,std::vector<uint> &texture_ids)
+void Renderer::renderObjects(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids)
 {
    // TO DO
 }
