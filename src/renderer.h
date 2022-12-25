@@ -13,15 +13,25 @@
 #include "camera.h"
 #include "texture.h"
 #include "map.h"
+#include "model.h"
 
 #include <iostream>
+
+struct Weapons {
+    Model sword;
+    Model cudgel;
+};
 
 class Renderer {
 public:
     Renderer(Camera & _camera): camera(_camera) {};
     ~Renderer() = default;
-    void renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids);
-    void renderObjects(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids);
+    void renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture_ids);
+    void renderLava(Shader &lava_shader,std::vector<uint> &lava_tex_ids);
+    void renderWeapons(Shader &shader,Weapons & weapons);
+    void renderRosettaStone(Shader &shader,Model &model3d);
+    void renderFlasks(Shader &shader,Model &flask);
+    void renderMonsters(Shader &shader,Model &monster);
     void renderCube();
     void renderQuad();
     void renderTestQuad();

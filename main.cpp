@@ -26,6 +26,8 @@ void show_gpu_memory(void);
 // camera
 Camera camera;
 
+
+
 bool firstMouse = true;
 float lastX =  SCR_WIDTH / 2.0f;
 float lastY =  SCR_HEIGHT / 2.0;
@@ -85,11 +87,10 @@ int main()
 
     // build and compile our shader program
     // ------------------------------------
-    Shader light_shader("../shaders/light_shader.vs", "../shaders/light_shader.fs");
-    Shader normal_shader("../shaders/normal_maps_shader.vs", "../shaders/normal_maps_shader.fs");
-
-    // auto map = Map::getInstance();
-    // auto maze = map->getMap();
+    Shader basic_shader("../shaders/basic_shader.vs", "../shaders/basic_shader.fs");
+    Shader normal_parallax_shader("../shaders/normal_parallax_shader.vs", "../shaders/normal_parallax_shader.fs");
+    Shader normal_specular_emission_shader("../shaders/normal_specular_emission_shader.vs", "../shaders/normal_specular_emission_shader.fs");
+    Shader lavaShader("../shaders/lava_shader.vs", "../shaders/lava_shader.fs");
 
     // Render Loop
     // -----------
@@ -98,10 +99,17 @@ int main()
     Texture floorTex("../ressources/texture/ground_Color.jpg","../ressources/texture/ground_Normal.jpg","../ressources/texture/ground_Depth.jpg",GL_CLAMP_TO_EDGE);
     Texture cubeTex("../ressources/texture/Rock_Color.jpg","../ressources/texture/Rock_Normal.jpg","../ressources/texture/Rock_Depth.jpg",GL_CLAMP_TO_EDGE);
     Texture roofTex("../ressources/texture/roof_Color.jpg","../ressources/texture/roof_Normal.jpg","../ressources/texture/roof_Depth.jpg",GL_CLAMP_TO_EDGE);
-    std::vector<uint> floorTexIds = {floorTex.id,floorTex.normal_id,floorTex.depth_id};
-    std::vector<uint> cubeTexIds = {cubeTex.id,cubeTex.normal_id,cubeTex.depth_id};
-    std::vector<uint> roofTexIds = {roofTex.id,roofTex.normal_id,roofTex.depth_id};
+    Texture lavaTex("../ressources/texture/Lava_Color.jpg","../ressources/texture/Lava_Normal.jpg","../ressources/texture/Lava_Depth.jpg",GL_CLAMP_TO_EDGE);
     std::vector<std::vector<uint>> texture_maze_ids{floorTex.ids,cubeTex.ids,roofTex.ids}; 
+    
+    Model vampire("../ressources/models/vampire/dancing_vampire.dae");
+    Model sword("../ressources/models/medieval-sword/model.dae");
+    Model cudgel("../ressources/models/cudgel/NordsTenderizer_tilted.fbx");
+    Model flask("../ressources/models/moon_potion_mask/flask.dae");
+
+    Weapons weapons{sword,cudgel};
+
+    Model rosetta("../ressources/models/rosetta-stone/scene.gltf");
 
     while(!glfwWindowShouldClose(window))
     {
@@ -121,12 +129,15 @@ int main()
 
         // input
         // -----
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         Renderer renderer(camera);
-        renderer.renderMaze(normal_shader,texture_maze_ids);
-        //renderer.renderObjects(normal_shader,texture_maze_ids);
+        renderer.renderMaze(normal_parallax_shader,texture_maze_ids);
+        renderer.renderFlasks(normal_specular_emission_shader,flask);
+        renderer.renderLava(lavaShader,lavaTex.ids);
+        renderer.renderMonsters(normal_specular_emission_shader,vampire);
+        renderer.renderRosettaStone(basic_shader,rosetta);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -161,7 +172,7 @@ void processInput(GLFWwindow *window){
 void processMovement(GLFWwindow *window)
 {
   // clavier mouvement
-    float cameraSpeed = 0.1f;
+    float cameraSpeed = 0.3f;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.Position += cameraSpeed * camera.Front;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

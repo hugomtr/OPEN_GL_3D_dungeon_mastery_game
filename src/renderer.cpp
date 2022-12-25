@@ -162,7 +162,7 @@ void Renderer::renderQuad()
 
 // by convention textures_list will be order given the following 
 // 
-void Renderer::renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids)
+void Renderer::renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture_ids)
 {
     Map* map = Map::getInstance();
 
@@ -178,19 +178,21 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &
     std::vector<uint> cubeTexIds = texture_ids[1];
     std::vector<uint> roofTexIds = texture_ids[2];
 
-    normal_shader.use();
-    normal_shader.setInt("diffuseMap", 0);
-    normal_shader.setInt("normalMap", 1);
-    normal_shader.setInt("depthMap", 2);
+    shader.use();
+    shader.setInt("diffuseMap", 0);
+    shader.setInt("normalMap", 1);
+    shader.setInt("depthMap", 2);
 
-    normal_shader.setMat4f("projection", glm::value_ptr(projection));
-    normal_shader.setMat4f("view", glm::value_ptr(view));
+    shader.setMat4f("projection", glm::value_ptr(projection));
+    shader.setMat4f("view", glm::value_ptr(view));
 
-    normal_shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    normal_shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
 
-    normal_shader.setVec3("lightColor", glm::value_ptr(glm::vec3(1.0f)));
-    normal_shader.setFloat("height_scale", 0.1f);
+    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+
+    shader.setFloat("height_scale", 0.1f);
+    shader.setFloat("vision_coeff", 50.0f);
 
     // block inside
     for(int i = 0; i < n_rows; i++){
@@ -200,7 +202,7 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &
                 model = glm::mat4(1.0f);
                 model = glm::scale(model, glm::vec3(2.0f));
                 model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),0.0f,static_cast<float>(2*j+1)));
-                normal_shader.setMat4f("model", glm::value_ptr(model));
+                shader.setMat4f("model", glm::value_ptr(model));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cubeTexIds[0]);
                 glActiveTexture(GL_TEXTURE1);
@@ -210,30 +212,84 @@ void Renderer::renderMaze(Shader &normal_shader,std::vector<std::vector<uint>> &
                 this->renderCube();
                 glDisable(GL_CULL_FACE);
             } else {
-                // ground 
-                model = glm::mat4(1.0f);
-                model = glm::scale(model, glm::vec3(2.0f));
-                model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),-1.0f,static_cast<float>(2*j+1)));
-                normal_shader.setMat4f("model", glm::value_ptr(model));
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, floorTexIds[0]);
-                glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D, floorTexIds[1]);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D, floorTexIds[2]);
-                this->renderQuad();
+                if (maze[i][j] != 5){
+                    // In case this is not lava
+                    // ground 
+                    model = glm::mat4(1.0f);
+                    model = glm::scale(model, glm::vec3(2.0f));
+                    model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),-1.0f,static_cast<float>(2*j+1)));
+                    shader.setMat4f("model", glm::value_ptr(model));
+                    glActiveTexture(GL_TEXTURE0);
+                    glBindTexture(GL_TEXTURE_2D, floorTexIds[0]);
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, floorTexIds[1]);
+                    glActiveTexture(GL_TEXTURE2);
+                    glBindTexture(GL_TEXTURE_2D, floorTexIds[2]);
+                    this->renderQuad();
+                }
                 // roof
                 model = glm::mat4(1.0f);
                 model = glm::scale(model, glm::vec3(2.0f));
                 model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),1.0f,static_cast<float>(2*j+1)));
                 model = glm::rotate(model,glm::radians(180.0f),glm::vec3(1.0f,0.0f,0.0f));
-                normal_shader.setMat4f("model", glm::value_ptr(model));
+                shader.setMat4f("model", glm::value_ptr(model));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, roofTexIds[0]);
                 glActiveTexture(GL_TEXTURE1);
                 glBindTexture(GL_TEXTURE_2D, roofTexIds[1]);
                 glActiveTexture(GL_TEXTURE2);
                 glBindTexture(GL_TEXTURE_2D, roofTexIds[2]);
+                this->renderQuad();
+            }     
+        }
+    }
+}
+
+void Renderer::renderLava(Shader &lava_shader,std::vector<uint> &lavaTexIds)
+{
+    Map* map = Map::getInstance();
+
+    std::vector<std::vector<int>> maze = map->getMap();
+    float n_rows = static_cast<float>(maze.size());
+    float n_columns = static_cast<float>(maze[0].size());
+
+    glm::mat4 model,view,projection;
+    view = camera.GetViewMatrix();
+    projection = camera.GetProjectionMatrix();
+
+    glm::vec3 lavaColor(1.0f,0.9f,0.9f);
+
+    lava_shader.use();
+    lava_shader.setInt("diffuseMap", 0);
+    lava_shader.setInt("normalMap", 1);
+    lava_shader.setInt("depthMap", 2);
+
+    lava_shader.setMat4f("projection", glm::value_ptr(projection));
+    lava_shader.setMat4f("view", glm::value_ptr(view));
+
+    lava_shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    lava_shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+
+    lava_shader.setVec3("lightColor", glm::value_ptr(lavaColor));
+
+    lava_shader.setFloat("height_scale", 0.1f);
+    lava_shader.setFloat("vision_coeff", 50.0f);
+
+    // block inside
+    for(int i = 0; i < n_rows; i++){
+        for (int j = 0;j < n_columns; j++){
+            if (maze[i][j] == 5){
+                // ground 
+                model = glm::mat4(1.0f);
+                model = glm::scale(model, glm::vec3(2.0f));
+                model = glm::translate(model,glm::vec3(static_cast<float>(2*i+1),-1.0f,static_cast<float>(2*j+1)));
+                lava_shader.setMat4f("model", glm::value_ptr(model));
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, lavaTexIds[0]);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, lavaTexIds[1]);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, lavaTexIds[2]);
                 this->renderQuad();
             }     
         }
@@ -269,7 +325,158 @@ void Renderer::renderTestQuad()
     glBindVertexArray(0);
 }
 
-void Renderer::renderObjects(Shader &normal_shader,std::vector<std::vector<uint>> &texture_ids)
+
+void Renderer::renderRosettaStone(Shader &shader,Model &model3d)
 {
-   // TO DO
+    Map* map = Map::getInstance();
+
+    float idx_rows = map->coords_rosetta[0];
+    float idx_columns = map->coords_rosetta[1];
+
+    glm::mat4 model,view,projection;
+    view = camera.GetViewMatrix();
+    projection = camera.GetProjectionMatrix();
+
+    shader.use();
+    shader.setMat4f("projection", glm::value_ptr(projection));
+    shader.setMat4f("view", glm::value_ptr(view));
+
+    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+
+    // rosetta
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,glm::vec3(static_cast<float>(4*(idx_rows+1)+1),0.6f,static_cast<float>(4*idx_columns)-1));
+    model = glm::scale(model, glm::vec3(0.25f));
+    model = glm::rotate(model, glm::radians(80.0f),glm::vec3(1.0f,0.0f,0.0f));
+    model = glm::rotate(model, glm::radians(7.0f),glm::vec3(0.0f,1.0f,0.0f));
+    shader.setMat4f("model", glm::value_ptr(model));
+    model3d.Draw(shader);
+}
+
+// A terme utiliser des objets vampires qui auront une position (plus besoin de l'objet map?)
+// une direction (pour les rotations la tete aligenr dans la bonne direction etc...)
+void Renderer::renderMonsters(Shader &shader,Model &monster)
+{
+    Map* map = Map::getInstance();
+
+    std::vector<std::vector<int>> maze = map->getMap();
+    float n_rows = static_cast<float>(maze.size());
+    float n_columns = static_cast<float>(maze[0].size());
+
+    glm::mat4 model,view,projection;
+    view = camera.GetViewMatrix();
+    projection = camera.GetProjectionMatrix();
+
+    shader.use();
+    shader.setInt("diffuseMap", 0);
+    shader.setInt("specularMap", 1);
+    shader.setInt("normalMap", 2);
+    shader.setInt("emissionMap", 3);
+
+    shader.setMat4f("projection", glm::value_ptr(projection));
+    shader.setMat4f("view", glm::value_ptr(view));
+
+    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+
+    shader.setFloat("vision_coeff", 50.0f);
+
+    // objects inside
+    for(int i = 0; i < n_rows; i++){
+        for (int j = 0;j < n_columns; j++){
+            if (maze[i][j] == 3){
+                // Vampire
+                model = glm::mat4(1.0f);
+                float scale_value = 0.018f;
+                model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-2.0f,static_cast<float>(4*j+2)));
+                model = glm::scale(model, glm::vec3(scale_value));
+                shader.setMat4f("model", glm::value_ptr(model));
+                monster.Draw(shader);
+            }
+
+        }
+    }
+}
+
+// A terme utiliser des objets flask
+void Renderer::renderFlasks(Shader &shader,Model &flask)
+{
+    Map* map = Map::getInstance();
+
+    std::vector<std::vector<int>> maze = map->getMap();
+    float n_rows = static_cast<float>(maze.size());
+    float n_columns = static_cast<float>(maze[0].size());
+
+    glm::mat4 model,view,projection;
+    view = camera.GetViewMatrix();
+    projection = camera.GetProjectionMatrix();
+
+    shader.use();
+    shader.setInt("diffuseMap", 0);
+    shader.setInt("specularMap", 1);
+    shader.setInt("normalMap", 2);
+    shader.setInt("emissionMap", 3);
+
+    shader.setMat4f("projection", glm::value_ptr(projection));
+    shader.setMat4f("view", glm::value_ptr(view));
+
+    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+
+    shader.setFloat("vision_coeff", 50.0f);
+
+    // objects inside
+    for(int i = 0; i < n_rows; i++){
+        for (int j = 0;j < n_columns; j++){
+            if (maze[i][j] == 4){
+                // flask     
+                model = glm::mat4(1.0f);
+                model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-1.0f,static_cast<float>(4*j+2)));
+                model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
+                shader.setMat4f("model", glm::value_ptr(model));
+                flask.Draw(shader);
+            }
+        }
+    }
+}
+
+void Renderer::renderWeapons(Shader &shader,Weapons &weapons)
+{
+    glm::mat4 model,view,projection;
+    view = camera.GetViewMatrix();
+    projection = camera.GetProjectionMatrix();
+
+    shader.use();
+    shader.setInt("diffuseMap", 0);
+    shader.setInt("specularMap", 1);
+    shader.setInt("normalMap", 2);
+    shader.setInt("emissionMap", 3);
+
+    shader.setMat4f("projection", glm::value_ptr(projection));
+    shader.setMat4f("view", glm::value_ptr(view));
+
+    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+
+    shader.setFloat("vision_coeff", 50.0f);
+
+    // // sword
+    // model = glm::mat4(1.0f);
+    // model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-1.0f,static_cast<float>(4*j+2)));
+    // model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
+    // shader.setMat4f("model", glm::value_ptr(model));
+    // weapons.sword.Draw(shader);
+
+    // // cudgel
+    // model = glm::mat4(1.0f);
+    // model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-1.0f,static_cast<float>(4*j+2)));
+    // model = glm::scale(model, glm::vec3(0.05f));
+    // model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
+    // shader.setMat4f("model", glm::value_ptr(model));
+    // weapons.cudgel.Draw(shader);
 }

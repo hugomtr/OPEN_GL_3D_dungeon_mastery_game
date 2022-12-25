@@ -1,0 +1,11 @@
+Model Information:
+* title:	The Rosetta Stone
+* source:	https://sketchfab.com/3d-models/the-rosetta-stone-1e03509704a3490e99a173e53b93e282
+* author:	The British Museum (https://sketchfab.com/britishmuseum)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "The Rosetta Stone" (https://sketchfab.com/3d-models/the-rosetta-stone-1e03509704a3490e99a173e53b93e282) by The British Museum (https://sketchfab.com/britishmuseum) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)

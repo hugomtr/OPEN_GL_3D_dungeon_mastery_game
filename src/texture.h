@@ -17,7 +17,7 @@ struct Texture {
     std::string type;
     std::string path;
     Texture() = default;
-    Texture(const char* filename,GLint mode);
+    Texture(const char* filename,GLint mode = GL_CLAMP_TO_EDGE);
     Texture(const char* filename1,const char* filename2,const char* filename3,GLint mode);
     ~Texture() = default;
 };

@@ -37,7 +37,7 @@ unsigned int loadTexture(const char* filename,GLint mode = GL_CLAMP_TO_EDGE)
     return textureID;
 }
 
-Texture::Texture(const char* filename,GLint mode = GL_CLAMP_TO_EDGE){
+Texture::Texture(const char* filename,GLint mode){
     id = loadTexture(filename,mode);
 }
 

@@ -27,8 +27,8 @@ const float NEAR = 0.1f;
 const float FAR  = 100.0f;
 
 // settings screen for projection matrix
-const unsigned int SCR_WIDTH = 700;
-const unsigned int SCR_HEIGHT = 500;
+const unsigned int SCR_WIDTH = 1400;
+const unsigned int SCR_HEIGHT = 1000;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
 class Camera
@@ -40,6 +40,7 @@ public:
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    glm::vec3 lightColor = glm::vec3(1.0f,1.0f,1.0f);
     // euler Angles
     float Yaw;
     float Pitch;
