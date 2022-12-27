@@ -18,7 +18,7 @@ public:
     void operator=(Map & _other) = delete;
     static Map * getInstance();
     std::vector<std::vector<int>> & getMap(){return maze;};
-    const std::vector<float> coords_rosetta = {25.0f,1.0f};
+    const std::vector<float> coords_rosetta = {28.0f,1.0f};
 };
 
 #endif
