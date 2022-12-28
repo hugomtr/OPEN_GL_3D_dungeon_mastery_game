@@ -118,7 +118,6 @@ void Renderer::renderQuad()
 {
     if (quadVAO == 0)
     {
-
         glm::vec3 tangent1,tangent2;
         triangle_tangent_calc(glm::vec3(-1.0f, 0.0f, 1.0f),glm::vec3(-1.0f,  0.0f, -1.0f),glm::vec3(1.0f, 0.0f, -1.0f),glm::vec2(0.0f,1.0f),glm::vec2(0.0f,0.0f),glm::vec2(1.0f,0.0f),tangent1);
         triangle_tangent_calc(glm::vec3(-1.0f,  0.0f, 1.0f),glm::vec3(1.0f, 0.0f, -1.0f),glm::vec3(1.0f,  0.0f, 1.0f),glm::vec2(0.0f, 1.0f),glm::vec2(1.0f, 0.0f),glm::vec2(1.0f, 1.0f),tangent2);    
@@ -167,12 +166,10 @@ void Renderer::renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture
     Map* map = Map::getInstance();
 
     std::vector<std::vector<int>> maze = map->getMap();
-    float n_rows = static_cast<float>(maze.size());
-    float n_columns = static_cast<float>(maze[0].size());
 
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     std::vector<uint> floorTexIds = texture_ids[0];
     std::vector<uint> cubeTexIds = texture_ids[1];
@@ -186,18 +183,19 @@ void Renderer::renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
-    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
 
-    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+    shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     shader.setFloat("height_scale", 0.1f);
     shader.setFloat("vision_coeff", 50.0f);
 
+
     // block inside
-    for(int i = 0; i < n_rows; i++){
-        for (int j = 0;j < n_columns; j++){
-            if (maze[i][j] == 0){
+    for(int i = 0; i < map->n_rows; i++){
+        for (int j = 0;j < map->n_columns; j++){
+            if (maze[i][j] <= 0){
                 glEnable(GL_CULL_FACE);
                 model = glm::mat4(1.0f);
                 model = glm::scale(model, glm::vec3(2.0f));
@@ -250,12 +248,10 @@ void Renderer::renderLava(Shader &lava_shader,std::vector<uint> &lavaTexIds)
     Map* map = Map::getInstance();
 
     std::vector<std::vector<int>> maze = map->getMap();
-    float n_rows = static_cast<float>(maze.size());
-    float n_columns = static_cast<float>(maze[0].size());
 
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     glm::vec3 lavaColor(1.0f,0.9f,0.9f);
 
@@ -267,8 +263,8 @@ void Renderer::renderLava(Shader &lava_shader,std::vector<uint> &lavaTexIds)
     lava_shader.setMat4f("projection", glm::value_ptr(projection));
     lava_shader.setMat4f("view", glm::value_ptr(view));
 
-    lava_shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    lava_shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
+    lava_shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    lava_shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
 
     lava_shader.setVec3("lightColor", glm::value_ptr(lavaColor));
 
@@ -276,8 +272,8 @@ void Renderer::renderLava(Shader &lava_shader,std::vector<uint> &lavaTexIds)
     lava_shader.setFloat("vision_coeff", 50.0f);
 
     // block inside
-    for(int i = 0; i < n_rows; i++){
-        for (int j = 0;j < n_columns; j++){
+    for(int i = 0; i < map->n_rows; i++){
+        for (int j = 0;j < map->n_columns; j++){
             if (maze[i][j] == 5){
                 // ground 
                 model = glm::mat4(1.0f);
@@ -334,16 +330,16 @@ void Renderer::renderRosettaStone(Shader &shader,Model &model3d)
     float idx_columns = map->coords_rosetta[1];
 
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     shader.use();
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
-    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     // rosetta
     model = glm::mat4(1.0f);
@@ -362,12 +358,10 @@ void Renderer::renderMonsters(Shader &shader,Model &monster)
     Map* map = Map::getInstance();
 
     std::vector<std::vector<int>> maze = map->getMap();
-    float n_rows = static_cast<float>(maze.size());
-    float n_columns = static_cast<float>(maze[0].size());
 
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     shader.use();
     shader.setInt("diffuseMap", 0);
@@ -378,15 +372,15 @@ void Renderer::renderMonsters(Shader &shader,Model &monster)
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
-    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     shader.setFloat("vision_coeff", 50.0f);
 
     // objects inside
-    for(int i = 0; i < n_rows; i++){
-        for (int j = 0;j < n_columns; j++){
+    for(int i = 0; i < map->n_rows; i++){
+        for (int j = 0;j < map->n_columns; j++){
             if (maze[i][j] == 3){
                 // Vampire
                 model = glm::mat4(1.0f);
@@ -407,12 +401,10 @@ void Renderer::renderFlasks(Shader &shader,Model &flask)
     Map* map = Map::getInstance();
 
     std::vector<std::vector<int>> maze = map->getMap();
-    float n_rows = static_cast<float>(maze.size());
-    float n_columns = static_cast<float>(maze[0].size());
 
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     shader.use();
     shader.setInt("diffuseMap", 0);
@@ -423,15 +415,15 @@ void Renderer::renderFlasks(Shader &shader,Model &flask)
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
-    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     shader.setFloat("vision_coeff", 50.0f);
 
     // objects inside
-    for(int i = 0; i < n_rows; i++){
-        for (int j = 0;j < n_columns; j++){
+    for(int i = 0; i < map->n_rows; i++){
+        for (int j = 0;j < map->n_columns; j++){
             if (maze[i][j] == 4){
                 // flask     
                 model = glm::mat4(1.0f);
@@ -447,8 +439,8 @@ void Renderer::renderFlasks(Shader &shader,Model &flask)
 void Renderer::renderWeapons(Shader &shader,Weapons &weapons)
 {
     glm::mat4 model,view,projection;
-    view = camera.GetViewMatrix();
-    projection = camera.GetProjectionMatrix();
+    view = camera->GetViewMatrix();
+    projection = camera->GetProjectionMatrix();
 
     shader.use();
     shader.setInt("diffuseMap", 0);
@@ -459,18 +451,18 @@ void Renderer::renderWeapons(Shader &shader,Weapons &weapons)
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
-    shader.setVec3("viewPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightPos", glm::value_ptr(this->camera.Position));
-    shader.setVec3("lightColor", glm::value_ptr(camera.lightColor));
+    shader.setVec3("viewPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
+    shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     shader.setFloat("vision_coeff", 50.0f);
 
-    // // sword
-    // model = glm::mat4(1.0f);
-    // model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-1.0f,static_cast<float>(4*j+2)));
-    // model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
-    // shader.setMat4f("model", glm::value_ptr(model));
-    // weapons.sword.Draw(shader);
+    // sword
+    model = glm::mat4(1.0f);
+    model = glm::translate(model,glm::vec3(static_cast<float>(2),-1.0f,static_cast<float>(4*26+2)));
+    model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
+    shader.setMat4f("model", glm::value_ptr(model));
+    weapons.sword.Draw(shader);
 
     // // cudgel
     // model = glm::mat4(1.0f);

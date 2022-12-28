@@ -9,11 +9,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "shader.h"
+#include "model.h"
 #include "camera.h"
 #include "texture.h"
-#include "map.h"
-#include "model.h"
+#include "monster.h"
 
 #include <iostream>
 
@@ -24,7 +23,9 @@ struct Weapons {
 
 class Renderer {
 public:
-    Renderer(Camera & _camera): camera(_camera) {};
+    Renderer(){
+        camera = Camera::getInstance(); 
+    };
     ~Renderer() = default;
     void renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture_ids);
     void renderLava(Shader &lava_shader,std::vector<uint> &lava_tex_ids);
@@ -40,7 +41,7 @@ private:
     unsigned int cubeVBO = 0;
     unsigned int quadVAO = 0;
     unsigned int quadVBO = 0;
-    Camera camera;
+    Camera * camera;
 };
 
 #endif

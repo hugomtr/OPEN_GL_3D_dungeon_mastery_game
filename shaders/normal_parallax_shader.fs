@@ -17,7 +17,7 @@ uniform float height_scale;
 uniform float vision_coeff;
 uniform vec3 lightColor;
 
-vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir){
+vec2 ParallaxMappingCoordinate(vec2 texCoords, vec3 viewDir){
     const int numLayers = 20;
     float layerDepth = 1.0 / numLayers;
     float currentLayerDepth = 0.0;
@@ -38,7 +38,7 @@ void main()
 {           
     // offset texture coordinates with Parallax Mapping
     vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
-    vec2 texCoords = ParallaxMapping(fs_in.TexCoords, viewDir);
+    vec2 texCoords = ParallaxMappingCoordinate(fs_in.TexCoords, viewDir);
 
     // if(texCoords.x > 1.02 || texCoords.y > 1.05 || texCoords.x < -0.02 || texCoords.y < -0.02)
     //     discard;
@@ -63,7 +63,7 @@ void main()
 
     // distance effect
     float distance = length(vec3(fs_in.TangentLightPos - fs_in.TangentFragPos));
-    float attenuation = min(vision_coeff / (distance * distance),1.0);
+    float attenuation = min(vision_coeff*2.0f / (distance * distance),1.0);
     vec3 lighting = (ambient + diffuse + specular) * attenuation * lightColor;
     
     FragColor = vec4(lighting, 1.0);

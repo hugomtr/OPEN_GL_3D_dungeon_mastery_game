@@ -22,19 +22,31 @@ const float YAW         = -90.0f;
 const float PITCH       =  0.0f;
 const float SPEED       =  2.5f;
 const float SENSITIVITY =  0.05f;
-const float ZOOM        =  45.0f;
+const float ZOOM        =  50.0f;
 
 // perpective value
 const float NEAR = 0.1f; 
 const float FAR  = 100.0f;
 
 // settings screen for projection matrix
-const unsigned int SCR_WIDTH = 1400;
-const unsigned int SCR_HEIGHT = 1000;
+const unsigned int SCR_WIDTH = 1000;
+const unsigned int SCR_HEIGHT = 600;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
 class Camera
 {
+protected:
+    // constructor with vectors
+    Camera(glm::vec3 position = glm::vec3(2.0f, 0.8f, 106.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(1.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+    {
+        Position = position;
+        WorldUp = up;
+        Yaw = yaw;
+        Pitch = pitch;
+        updateCameraVectors(false);
+    }
+
+    static Camera * camera;
 public:
     // camera Attributes
     glm::vec3 Position;
@@ -43,7 +55,7 @@ public:
     glm::vec3 Right;
     glm::vec3 WorldUp;
     glm::vec3 lightColor = glm::vec3(1.0f,1.0f,1.0f);
-    glm::vec2 cameraMapCoordinates = glm::vec2(0.0f,26.0f);
+    std::vector<int> cameraMapCoordinates = {0,26};
     // euler Angles
     float Yaw;
     float Pitch;
@@ -52,24 +64,10 @@ public:
     float MouseSensitivity;
     float Zoom;
 
-    // constructor with vectors
-    Camera(glm::vec3 position = glm::vec3(2.0f, 1.0f, 106.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(1.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
-    {
-        Position = position;
-        WorldUp = up;
-        Yaw = yaw;
-        Pitch = pitch;
-        updateCameraVectors(false);
-    }
-    // constructor with scalar values
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(1.0f, 0.0f, 0.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
-    {
-        Position = glm::vec3(posX, posY, posZ);
-        WorldUp = glm::vec3(upX, upY, upZ);
-        Yaw = yaw;
-        Pitch = pitch;
-        updateCameraVectors(false);
-    }
+    // get Instance of Camera
+    static Camera * getInstance();
+    void operator=(Camera & _other) = delete;
+    Camera(Camera & _other) = delete;
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
@@ -98,7 +96,7 @@ public:
             updateCameraVectors(true);}
     }
 
-    void ProcessMovement(){
+    void process_movement(){
         Map* map = Map::getInstance();
         std::vector<std::vector<int>> maze = map->getMap();
         const float velocity = 4.0f;
@@ -106,31 +104,33 @@ public:
         int x = static_cast<int>(cameraMapCoordinates[0] + Front[0]);
         int y = static_cast<int>(cameraMapCoordinates[1] + Front[2]);
 
-        if ((maze[x][y] != 0) && x < 30){
-            Position += Front * velocity;
-            cameraMapCoordinates[0] = x;
-            cameraMapCoordinates[1] = y;
+        if ((x < 30) && (y < 30) && (x >= 0) && (y >= 0)){
+            if (maze[x][y] > 0){
+                Position += Front * velocity;
+                cameraMapCoordinates[0] = x;
+                cameraMapCoordinates[1] = y;
+            }
         }
     }
 
-    // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true,GLboolean constrainYaw = true)
-    {
-        xoffset *= MouseSensitivity;
-        yoffset *= MouseSensitivity;
+    // // processes input received from a mouse input system. Expects the offset value in both the x and y direction.
+    // void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true,GLboolean constrainYaw = true)
+    // {
+    //     xoffset *= MouseSensitivity;
+    //     yoffset *= MouseSensitivity;
 
-        Pitch += yoffset;
+    //     Pitch += yoffset;
 
-        // make sure that when pitch is out of bounds, screen doesn't get flipped
-        if (constrainPitch)
-        {
-            if (Pitch > 89.0f)
-                Pitch = 89.0f;
-            if (Pitch < -89.0f)
-                Pitch = -89.0f;
-        }
-        updateCameraVectors(false);
-    }
+    //     // make sure that when pitch is out of bounds, screen doesn't get flipped
+    //     if (constrainPitch)
+    //     {
+    //         if (Pitch > 89.0f)
+    //             Pitch = 89.0f;
+    //         if (Pitch < -89.0f)
+    //             Pitch = -89.0f;
+    //     }
+    //     updateCameraVectors(false);
+    // }
 
     // processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
     void ProcessMouseScroll(float yoffset)
@@ -151,4 +151,5 @@ private:
         Up    = glm::normalize(glm::cross(Right, Front));
     }
 };
+
 #endif

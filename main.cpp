@@ -6,27 +6,24 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "src/shader.h"
-#include "src/camera.h"
-#include "src/model.h"
-#include "src/map.h"
 #include "src/renderer.h"
+#include "src/hero.h"
+#include "src/monster.h"
+#include "src/model.h"
 #include "src/texture.h"
 
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processchangeDirection(GLFWwindow *window);
 void processInput(GLFWwindow *window);
 void processMovement(GLFWwindow *window);
-unsigned int loadTexture(const char* filename,GLint mode);
 void show_gpu_memory(void);
 
 // camera
-Camera camera;
-
-
+Hero * hero = Hero::getInstance();
+Camera * camera = Camera::getInstance();
 
 bool firstMouse = true;
 float lastX =  SCR_WIDTH / 2.0f;
@@ -62,7 +59,6 @@ int main()
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
@@ -94,8 +90,6 @@ int main()
 
     // Render Loop
     // -----------
-    float accumulateTime = 0.0;
-
     Texture floorTex("../ressources/texture/ground_Color.jpg","../ressources/texture/ground_Normal.jpg","../ressources/texture/ground_Depth.jpg",GL_CLAMP_TO_EDGE);
     Texture cubeTex("../ressources/texture/Rock_Color.jpg","../ressources/texture/Rock_Normal.jpg","../ressources/texture/Rock_Depth.jpg",GL_CLAMP_TO_EDGE);
     Texture roofTex("../ressources/texture/roof_Color.jpg","../ressources/texture/roof_Normal.jpg","../ressources/texture/roof_Depth.jpg",GL_CLAMP_TO_EDGE);
@@ -106,33 +100,59 @@ int main()
     Model sword("../ressources/models/medieval-sword/model.dae");
     Model cudgel("../ressources/models/cudgel/NordsTenderizer_tilted.fbx");
     Model flask("../ressources/models/moon_potion_mask/flask.dae");
+    Model rosetta("../ressources/models/rosetta-stone/scene.gltf");
 
     Weapons weapons{sword,cudgel};
 
-    Model rosetta("../ressources/models/rosetta-stone/scene.gltf");
+    float accumulateTimeHeroMovement = 0.0f;
+    float accumulateTimeMonsterMovement = 0.0f;
+    float accumulateTimeDirection = 0.0f;
+
+    Map* map = Map::getInstance();
+
+    std::vector<std::vector<int>> maze = map->getMap();
+
+    std::vector<Monster> monsters_list;
+
+    // create Monsters object
+    for (int i = 0; i < map->n_rows; i++){
+        for (int j = 0;j < map->n_columns; j++){
+            if (maze[i][j] == 3){
+                monsters_list.push_back(Monster(std::vector<int>{i,j}));
+            }
+        }
+    }
 
     while(!glfwWindowShouldClose(window))
     {
         // per-frame time logic
         // --------------------
         processInput(window);
-        processMovement(window);
 
         float currentFrame = static_cast<float>(glfwGetTime());
-        if (accumulateTime > 0.2) {
-            show_gpu_memory();
-            accumulateTime = 0.0;
+        
+        if (accumulateTimeHeroMovement > 0.3) {
+            accumulateTimeHeroMovement = 0.0;
+            processMovement(window);
         }
+        
+        if (accumulateTimeDirection > 0.1) {
+            accumulateTimeDirection = -0.2;
+            processchangeDirection(window);
+        }
+
         deltaTime = currentFrame - lastFrame;
-        accumulateTime += deltaTime;
+        accumulateTimeDirection += deltaTime;
+        accumulateTimeMonsterMovement += deltaTime;
+        accumulateTimeHeroMovement += deltaTime;
         lastFrame = currentFrame;
 
         // input
         // -----
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        Renderer renderer(camera);
+        Renderer renderer;
         renderer.renderMaze(normal_parallax_shader,texture_maze_ids);
         renderer.renderFlasks(normal_specular_emission_shader,flask);
         renderer.renderLava(lavaShader,lavaTex.ids);
@@ -156,53 +176,44 @@ void processInput(GLFWwindow *window){
         glfwSetWindowShouldClose(window, true);
 }
 
-// void processMovement(GLFWwindow *window)
-// {
-//     // clavier mouvement
-//     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//         camera.ProcessKeyboard(FORWARD);
-//     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//         camera.ProcessKeyboard(BACKWARD);
-//     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//         camera.ProcessKeyboard(LEFT);
-//     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//         camera.ProcessKeyboard(RIGHT);
-// }
-
-void processMovement(GLFWwindow *window)
+void processchangeDirection(GLFWwindow *window)
 {
-  // clavier mouvement
-    float cameraSpeed = 0.3f;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.Position += cameraSpeed * camera.Front;
+    // clavier direction
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.Position -= cameraSpeed * camera.Front;
+        camera->ProcessKeyboard(BACKWARD);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.Position -= glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+        camera->ProcessKeyboard(LEFT);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.Position += glm::normalize(glm::cross(camera.Front, camera.Up)) * cameraSpeed;
+        camera->ProcessKeyboard(RIGHT);
 }
 
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
+void processMovement(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+        camera->process_movement();
+        hero->process_turn();
     }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;   
-
-    lastX = xpos;
-    lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset,yoffset,true);
 }
+
+// void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+// {
+//     float xpos = static_cast<float>(xposIn);
+//     float ypos = static_cast<float>(yposIn);
+
+//     if (firstMouse)
+//     {
+//         lastX = xpos;
+//         lastY = ypos;
+//         firstMouse = false;
+//     }
+
+//     float xoffset = xpos - lastX;
+//     float yoffset = lastY - ypos;   
+
+//     lastX = xpos;
+//     lastY = ypos;
+
+//     camera->ProcessMouseMovement(xoffset,yoffset,true);
+// }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -215,7 +226,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    camera->ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void show_gpu_memory(){
