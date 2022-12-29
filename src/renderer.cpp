@@ -13,6 +13,43 @@ void triangle_tangent_calc(glm::vec3 pos1,glm::vec3 pos2,glm::vec3 pos3,glm::vec
     tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
 }
 
+float calculate_rotation_monster(const std::vector<int>& direction) {
+    //
+    if (direction == std::vector<int>{0,-1})
+        return 180.0f;
+    if (direction == std::vector<int>{1,0})
+        return 90.0f;
+    if (direction == std::vector<int>{-1,0})
+        return -90.0f;
+    return 0.0f;
+}
+
+float calculate_rotation_weapon(const float a,const float b) {
+    float value_rot_y = 0.0f;
+
+    if ((a == -1.0f) && (b == 0.0f))
+        value_rot_y = 180.0f;
+
+    if ((a == 0.0f) && (b == 1.0f)) 
+        value_rot_y = -90.0f;
+
+    if ((a == 0.0f) && (b == -1.0f)) 
+        value_rot_y = 90.0f;
+
+    return value_rot_y; 
+}
+
+glm::vec3 calculate_rotation_cudgel(const std::vector<int>& direction) {
+    if (direction == std::vector<int>{1,0})
+        return glm::vec3(30.0f,-30.0f,-135.0f);
+    // if (direction == std::vector<int>{-1,0})
+    //     return;
+    // if (direction == std::vector<int>{0,-1})
+    //     return 180.0f;
+    // if (direction == std::vector<int>{1,0})
+    //     return 90.0f;
+}
+
 // renderCube() renders a 1x1 3D cube in NDC.
 // -------------------------------------------------
 void Renderer::renderCube()
@@ -189,7 +226,7 @@ void Renderer::renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture
     shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
     shader.setFloat("height_scale", 0.1f);
-    shader.setFloat("vision_coeff", 50.0f);
+    shader.setFloat("vision_coeff", camera->vision_coeff);
 
 
     // block inside
@@ -269,7 +306,7 @@ void Renderer::renderLava(Shader &lava_shader,std::vector<uint> &lavaTexIds)
     lava_shader.setVec3("lightColor", glm::value_ptr(lavaColor));
 
     lava_shader.setFloat("height_scale", 0.1f);
-    lava_shader.setFloat("vision_coeff", 50.0f);
+    lava_shader.setFloat("vision_coeff", 2*camera->vision_coeff);
 
     // block inside
     for(int i = 0; i < map->n_rows; i++){
@@ -334,6 +371,7 @@ void Renderer::renderRosettaStone(Shader &shader,Model &model3d)
     projection = camera->GetProjectionMatrix();
 
     shader.use();
+    shader.setInt("diffuseMap", 10);
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 
@@ -353,12 +391,8 @@ void Renderer::renderRosettaStone(Shader &shader,Model &model3d)
 
 // A terme utiliser des objets vampires qui auront une position (plus besoin de l'objet map?)
 // une direction (pour les rotations la tete aligenr dans la bonne direction etc...)
-void Renderer::renderMonsters(Shader &shader,Model &monster)
+void Renderer::renderMonster(Shader &shader,Model &model_monster,Monster & monster)
 {
-    Map* map = Map::getInstance();
-
-    std::vector<std::vector<int>> maze = map->getMap();
-
     glm::mat4 model,view,projection;
     view = camera->GetViewMatrix();
     projection = camera->GetProjectionMatrix();
@@ -376,23 +410,18 @@ void Renderer::renderMonsters(Shader &shader,Model &monster)
     shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
     shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
-    shader.setFloat("vision_coeff", 50.0f);
+    shader.setFloat("vision_coeff", camera->vision_coeff);
 
-    // objects inside
-    for(int i = 0; i < map->n_rows; i++){
-        for (int j = 0;j < map->n_columns; j++){
-            if (maze[i][j] == 3){
-                // Vampire
-                model = glm::mat4(1.0f);
-                float scale_value = 0.018f;
-                model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-2.0f,static_cast<float>(4*j+2)));
-                model = glm::scale(model, glm::vec3(scale_value));
-                shader.setMat4f("model", glm::value_ptr(model));
-                monster.Draw(shader);
-            }
-
-        }
-    }
+    // Vampire
+    float i = monster.curr_position[0];
+    float j = monster.curr_position[1];
+    model = glm::mat4(1.0f);
+    float scale_value = 0.018f;
+    model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-2.0f,static_cast<float>(4*j+2)));
+    model = glm::scale(model, glm::vec3(scale_value));
+    model = glm::rotate(model, glm::radians(calculate_rotation_monster(monster.direction)),glm::vec3(0.0f,1.0f,0.0f));    
+    shader.setMat4f("model", glm::value_ptr(model));
+    model_monster.Draw(shader);
 }
 
 // A terme utiliser des objets flask
@@ -419,7 +448,7 @@ void Renderer::renderFlasks(Shader &shader,Model &flask)
     shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
     shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
-    shader.setFloat("vision_coeff", 50.0f);
+    shader.setFloat("vision_coeff", camera->vision_coeff);
 
     // objects inside
     for(int i = 0; i < map->n_rows; i++){
@@ -436,8 +465,10 @@ void Renderer::renderFlasks(Shader &shader,Model &flask)
     }
 }
 
-void Renderer::renderWeapons(Shader &shader,Weapons &weapons)
+void Renderer::renderWeapons(Shader &shader,WeaponsModel & model_weapon)
 {
+    Hero * hero = Hero::getInstance();
+
     glm::mat4 model,view,projection;
     view = camera->GetViewMatrix();
     projection = camera->GetProjectionMatrix();
@@ -455,20 +486,40 @@ void Renderer::renderWeapons(Shader &shader,Weapons &weapons)
     shader.setVec3("lightPos", glm::value_ptr(this->camera->Position));
     shader.setVec3("lightColor", glm::value_ptr(camera->lightColor));
 
-    shader.setFloat("vision_coeff", 50.0f);
+    shader.setFloat("vision_coeff", camera->vision_coeff);
 
     // sword
-    model = glm::mat4(1.0f);
-    model = glm::translate(model,glm::vec3(static_cast<float>(2),-1.0f,static_cast<float>(4*26+2)));
-    model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
-    shader.setMat4f("model", glm::value_ptr(model));
-    weapons.sword.Draw(shader);
+    if (hero->weapon_type == SWORD){
+        model = glm::mat4(1.0f);
+        model = glm::translate(model,glm::vec3(static_cast<float>(camera->Position[0] + 0.4*(camera->Front[0])),camera->Position[1],static_cast<float>(camera->Position[2] + 0.4*(camera->Front[2]))));
+        model = glm::scale(model, glm::vec3(0.4f));
 
-    // // cudgel
-    // model = glm::mat4(1.0f);
-    // model = glm::translate(model,glm::vec3(static_cast<float>(4*i+2),-1.0f,static_cast<float>(4*j+2)));
-    // model = glm::scale(model, glm::vec3(0.05f));
-    // model = glm::rotate(model, glm::radians(-90.0f),glm::vec3(1.0f,0.0f,0.0f));
-    // shader.setMat4f("model", glm::value_ptr(model));
-    // weapons.cudgel.Draw(shader);
+        float rotation_sword = calculate_rotation_weapon(camera->Front[0],camera->Front[2]);
+        
+        // Order is important here
+        model = glm::rotate(model, glm::radians(rotation_sword),glm::vec3(0.0f,1.0f,0.0f));
+
+        model = glm::rotate(model, glm::radians(-135.0f),glm::vec3(0.0f,0.0f,1.0f));
+        model = glm::rotate(model, glm::radians(-30.0f),glm::vec3(0.0f,1.0f,0.0f));
+        model = glm::rotate(model, glm::radians(30.0f),glm::vec3(1.0f,0.0f,0.0f));
+
+        shader.setMat4f("model", glm::value_ptr(model));
+        model_weapon.sword.Draw(shader);
+    } else if (hero->weapon_type == CUDGEL) {
+        // cudgel
+        model = glm::mat4(1.0f);
+        model = glm::translate(model,glm::vec3(static_cast<float>(camera->Position[0] + 0.3*(camera->Front[0])),camera->Position[1],static_cast<float>(camera->Position[2] + 0.3*(camera->Front[2]))));
+        model = glm::scale(model, glm::vec3(0.02f));
+        
+        float rotation_cudgel = calculate_rotation_weapon(camera->Front[0],camera->Front[2]);
+        
+        // Order is important here
+        model = glm::rotate(model, glm::radians(rotation_cudgel),glm::vec3(0.0f,1.0f,0.0f));
+
+        model = glm::rotate(model, glm::radians(-25.0f),glm::vec3(0.0f,0.0f,1.0f));
+        model = glm::rotate(model, glm::radians(30.0f),glm::vec3(0.0f,1.0f,0.0f));
+        
+        shader.setMat4f("model", glm::value_ptr(model));
+        model_weapon.cudgel.Draw(shader);
+    }
 }

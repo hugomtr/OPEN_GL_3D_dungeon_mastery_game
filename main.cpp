@@ -20,10 +20,11 @@ void processchangeDirection(GLFWwindow *window);
 void processInput(GLFWwindow *window);
 void processMovement(GLFWwindow *window);
 void show_gpu_memory(void);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
-// camera
 Hero * hero = Hero::getInstance();
 Camera * camera = Camera::getInstance();
+Renderer renderer;
 
 bool firstMouse = true;
 float lastX =  SCR_WIDTH / 2.0f;
@@ -59,6 +60,7 @@ int main()
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
@@ -96,13 +98,13 @@ int main()
     Texture lavaTex("../ressources/texture/Lava_Color.jpg","../ressources/texture/Lava_Normal.jpg","../ressources/texture/Lava_Depth.jpg",GL_CLAMP_TO_EDGE);
     std::vector<std::vector<uint>> texture_maze_ids{floorTex.ids,cubeTex.ids,roofTex.ids}; 
     
-    Model vampire("../ressources/models/vampire/dancing_vampire.dae");
+    Model monster_model("../ressources/models/vampire/dancing_vampire.dae");
     Model sword("../ressources/models/medieval-sword/model.dae");
     Model cudgel("../ressources/models/cudgel/NordsTenderizer_tilted.fbx");
     Model flask("../ressources/models/moon_potion_mask/flask.dae");
     Model rosetta("../ressources/models/rosetta-stone/scene.gltf");
 
-    Weapons weapons{sword,cudgel};
+    WeaponsModel weapons{sword,cudgel};
 
     float accumulateTimeHeroMovement = 0.0f;
     float accumulateTimeMonsterMovement = 0.0f;
@@ -135,9 +137,20 @@ int main()
             accumulateTimeHeroMovement = 0.0;
             processMovement(window);
         }
+
+        if (accumulateTimeMonsterMovement > 1.0) {
+            accumulateTimeMonsterMovement = 0.0;
+            for (Monster & monster : monsters_list){
+                monster.process_turn();
+                if (monster.is_dead){
+                    std::cout << "monster died" <<std::endl;
+                    deleteMonster(monsters_list, monster.initial_position);
+                }
+            }
+        }        
         
-        if (accumulateTimeDirection > 0.1) {
-            accumulateTimeDirection = -0.2;
+        if (accumulateTimeDirection > 0.25) {
+            accumulateTimeDirection = 0.0;
             processchangeDirection(window);
         }
 
@@ -147,17 +160,21 @@ int main()
         accumulateTimeHeroMovement += deltaTime;
         lastFrame = currentFrame;
 
+        if ((hero->STAMINA + deltaTime) < 1)
+            hero->STAMINA += deltaTime;
         // input
         // -----
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        Renderer renderer;
         renderer.renderMaze(normal_parallax_shader,texture_maze_ids);
         renderer.renderFlasks(normal_specular_emission_shader,flask);
         renderer.renderLava(lavaShader,lavaTex.ids);
-        renderer.renderMonsters(normal_specular_emission_shader,vampire);
+        for (Monster & monster : monsters_list){
+            renderer.renderMonster(normal_specular_emission_shader,monster_model,monster);
+        }
         renderer.renderRosettaStone(basic_shader,rosetta);
+        renderer.renderWeapons(normal_specular_emission_shader,weapons);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -188,32 +205,26 @@ void processchangeDirection(GLFWwindow *window)
 }
 
 void processMovement(GLFWwindow *window) {
+    hero->process_turn();
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
         camera->process_movement();
-        hero->process_turn();
+        hero->process_input_user();
     }
 }
 
-// void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-// {
-//     float xpos = static_cast<float>(xposIn);
-//     float ypos = static_cast<float>(yposIn);
-
-//     if (firstMouse)
-//     {
-//         lastX = xpos;
-//         lastY = ypos;
-//         firstMouse = false;
-//     }
-
-//     float xoffset = xpos - lastX;
-//     float yoffset = lastY - ypos;   
-
-//     lastX = xpos;
-//     lastY = ypos;
-
-//     camera->ProcessMouseMovement(xoffset,yoffset,true);
-// }
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        if (hero->STAMINA > hero->getWeapon()->stamina_needed)
+            hero->attack_monster();
+    }
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    {
+        hero->should_change_weapon();
+        std::cout << hero->weapon_type << std::endl;
+    }
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------

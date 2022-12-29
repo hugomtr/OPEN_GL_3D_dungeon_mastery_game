@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <iostream>
 
 class IWeapon;
 
@@ -20,29 +21,39 @@ public:
 };
 
 class IWeapon {
+    int damage;
 public:
+    float stamina_needed;
     virtual void attack(Actor * actor) = 0;
 };
 
 class Sword : public IWeapon {
     int damage = 3;
 public:
+    Sword(){
+        stamina_needed = 0.5f;
+    }
+
     void attack(Actor * actor) override {
         int life_actor = actor->getLife();
         life_actor -= damage;
+        std::cout << "hero attack";
         actor->setLife(life_actor);
     };
 };
 
 class Cudgel : public IWeapon {
-    int damage = 2;
+    int damage = 5;
 public:
+    Cudgel(){
+        stamina_needed = 0.9f;
+    }
+
     void attack(Actor * actor) {
         int life_actor = actor->getLife();
         life_actor -= damage;
         actor->setLife(life_actor);
     };
 };
-
 
 #endif

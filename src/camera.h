@@ -63,7 +63,8 @@ public:
     float MovementSpeed;
     float MouseSensitivity;
     float Zoom;
-
+    float vision_coeff = 50.0f;
+    
     // get Instance of Camera
     static Camera * getInstance();
     void operator=(Camera & _other) = delete;

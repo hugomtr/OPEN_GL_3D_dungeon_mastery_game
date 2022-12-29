@@ -10,5 +10,6 @@ void Lava::interact(Hero * _hero) {
         // and then terminate program
     } 
     _hero->getCamera()->lightColor = glm::vec3(1.0f,0.5f,0.5f);
+    _hero->type_timer = LAVA_TIMER;
     // renderer.time_attributes = 5; // attributes from renderer that say how much time renderer need to render by this attributes
 };

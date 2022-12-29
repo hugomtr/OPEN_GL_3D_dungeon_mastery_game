@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-struct Weapons {
+struct WeaponsModel {
     Model sword;
     Model cudgel;
 };
@@ -29,10 +29,10 @@ public:
     ~Renderer() = default;
     void renderMaze(Shader &shader,std::vector<std::vector<uint>> &texture_ids);
     void renderLava(Shader &lava_shader,std::vector<uint> &lava_tex_ids);
-    void renderWeapons(Shader &shader,Weapons & weapons);
+    void renderWeapons(Shader &shader,WeaponsModel & model);
     void renderRosettaStone(Shader &shader,Model &model3d);
     void renderFlasks(Shader &shader,Model &flask);
-    void renderMonsters(Shader &shader,Model &monster);
+    void renderMonster(Shader &shader,Model &model_monster,Monster &monster);
     void renderCube();
     void renderQuad();
     void renderTestQuad();

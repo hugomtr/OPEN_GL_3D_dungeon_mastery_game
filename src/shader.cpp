@@ -1,5 +1,6 @@
 #include "shader.h"
 
+// We don't need geometry shader in this project for now
 Shader::Shader(const char* vertexPath, const char* geometryPath, const char* fragmentPath){
     // 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
