@@ -12,6 +12,7 @@ find_package(ASSIMP REQUIRED)
 if(ASSIMP_FOUND)
 	include_directories(${ASSIMP_INCLUDE_DIR})
 endif()
+find_package(SFML COMPONENTS audio REQUIRED)
 
 add_compile_options(-Wall -Wextra)
 
@@ -25,5 +26,6 @@ target_link_libraries(OpenGLDungeonMastery
 	glad
 	glfw
 	glm
+	sfml-audio
 	${ASSIMP_LIBRARIES}
 	OpenGL::GL)

@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "sound.h"
+
 class IWeapon;
 
 class Actor {
@@ -29,12 +31,14 @@ public:
 
 class Sword : public IWeapon {
     int damage = 3;
+    Sound * sword_sound = new Sound("../ressources/music/sword_hit.wav");
 public:
     Sword(){
-        stamina_needed = 0.5f;
+        stamina_needed = 0.25f;
     }
 
     void attack(Actor * actor) override {
+        sword_sound->play();
         int life_actor = actor->getLife();
         life_actor -= damage;
         std::cout << "hero attack";
@@ -44,12 +48,14 @@ public:
 
 class Cudgel : public IWeapon {
     int damage = 5;
+    Sound * cudgel_sound = new Sound("../ressources/music/cudgel_hit.wav");
 public:
     Cudgel(){
-        stamina_needed = 0.9f;
+        stamina_needed = 0.5f;
     }
 
     void attack(Actor * actor) {
+        cudgel_sound->play();
         int life_actor = actor->getLife();
         life_actor -= damage;
         actor->setLife(life_actor);

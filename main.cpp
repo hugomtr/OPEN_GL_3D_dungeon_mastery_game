@@ -125,6 +125,11 @@ int main()
         }
     }
 
+    Sound main_sound("../ressources/music/Explore_the_Ruins.wav");
+
+    main_sound.play();
+    main_sound.loop();
+
     while(!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -141,10 +146,12 @@ int main()
         if (accumulateTimeMonsterMovement > 1.0) {
             accumulateTimeMonsterMovement = 0.0;
             for (Monster & monster : monsters_list){
-                monster.process_turn();
-                if (monster.is_dead){
-                    std::cout << "monster died" <<std::endl;
-                    deleteMonster(monsters_list, monster.initial_position);
+                if (!hero->is_dead){
+                    monster.process_turn();
+                    if (monster.is_dead){
+                        std::cout << "monster died" <<std::endl;
+                        deleteMonster(monsters_list, monster.initial_position);
+                    }
                 }
             }
         }        
@@ -205,24 +212,25 @@ void processchangeDirection(GLFWwindow *window)
 }
 
 void processMovement(GLFWwindow *window) {
-    hero->process_turn();
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-        camera->process_movement();
-        hero->process_input_user();
+    if (!hero->is_dead){
+        hero->process_turn();
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+            camera->process_movement();
+            hero->process_input_user();
+        }
     }
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !hero->is_dead)
     {
         if (hero->STAMINA > hero->getWeapon()->stamina_needed)
             hero->attack_monster();
     }
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS && !hero->is_dead)
     {
         hero->should_change_weapon();
-        std::cout << hero->weapon_type << std::endl;
     }
 }
 

@@ -14,6 +14,9 @@ public:
         life = 12;
         curr_position = initial_position;
     }  
+    
+    Sound * see_hero_sound = new Sound("../ressources/music/attack.wav");
+
     bool is_dead = false;
     
     void can_hear_hero();

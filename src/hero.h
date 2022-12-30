@@ -39,7 +39,8 @@ public:
     static int ANIMATION_TIMER;
     static float STAMINA;
     int type_timer = 0;
-
+    Sound * die_sound = new Sound("../ressources/music/die.wav");
+    bool is_dead = false;    
     void incrementTimer(int type_timer);
     
     Hero(Hero & _other) = delete;

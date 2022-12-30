@@ -95,24 +95,36 @@ void Monster::process_turn() {
     bool can_see_hero = this->can_see_hero(hero_position);
     bool ready_to_attack_hero = (std::abs(hero_position[0] - curr_position[0]) == 1) || (std::abs(hero_position[1] - curr_position[1]) == 1);
 
+
     if (can_see_hero){ 
+
+        if (!see_hero_sound->music_played){
+            see_hero_sound->play();
+        }
+
         if (ready_to_attack_hero){
             weapon->attack(hero);
-            std::cout << "Monster attack hero" << std::endl;
+            std::cout << "Monster attack hero " << this->initial_position[0] << this->initial_position[1] << std::endl;
+            std::cout << "hero life " << hero->getLife() << std::endl;
             hero->getCamera()->lightColor = glm::vec3(1.0f,0.5f,0.5f);
             hero->type_timer = MONSTER_ATTACK_TIMER;
         } else {
             this->process_movement(hero_position);
         }
+        
         // send to hero the identity of the monster that pursue him for optimizing purpose
         hero->monster = this;
-        // std::cout << "Monster: " << hero->monster->initial_position[0] << " " << hero->monster->initial_position[1] << " can see hero" << std::endl;
+        std::cout << "Monster: " << hero->monster->initial_position[0] << " " << hero->monster->initial_position[1] << " can see hero" << std::endl;
         // std::cout << "Hero: " << hero_position[0] << " " << hero_position[1] << std::endl;
+    
+    } else if (see_hero_sound->music_played && !can_see_hero){
+        see_hero_sound->stop();
     }
 
     if (life <=0) {
         this->die();
         is_dead = true;
+        see_hero_sound->stop();
     }
 }
 

@@ -109,7 +109,9 @@ void Hero::change_attributes_according_to_life(){
     float lambda = life / 20.0f;
     float value = ( 1.0f - lambda ) * 5.0f + lambda * 25.0f;
     if (life <= 0) {
-        value = 0;
+        value = 3.0;
+        is_dead = true;
+        die_sound->play();
     }
     camera->vision_coeff = value; 
 }
@@ -117,6 +119,10 @@ void Hero::change_attributes_according_to_life(){
 void Hero::incrementTimer(int type_timer){
     if (ANIMATION_TIMER++ > type_timer){
         ANIMATION_TIMER = 0;
-        camera->lightColor = glm::vec3(1.0f);
+        if (!is_dead){
+            camera->lightColor = glm::vec3(1.0f);}
+        else {
+            camera->lightColor = glm::vec3(1.0f,0.5f,0.5f);
+        }
     }
 }
