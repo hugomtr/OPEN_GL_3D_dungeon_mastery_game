@@ -9,4 +9,5 @@ void Rosetta::interact(Hero * hero){
 
     hero->getCamera()->lightColor = glm::vec3(0.7f,1.0f,0.7f);
     hero->type_timer = ROSETTA_TIMER;
+    rosetta_sound->play();
 };

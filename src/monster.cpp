@@ -43,8 +43,6 @@ bool Monster::can_see_hero(std::vector<int> & hero_position){
             }
         }
     }
-    // std::cout << "Monster: " << initial_position[0] << " " << initial_position[1] << " can see hero" << std::endl;
-    // std::cout << "Hero: " << hero_position[0] << " " << hero_position[1] << std::endl;
     return true;
 }
 
@@ -114,8 +112,6 @@ void Monster::process_turn() {
         
         // send to hero the identity of the monster that pursue him for optimizing purpose
         hero->monster = this;
-        std::cout << "Monster: " << hero->monster->initial_position[0] << " " << hero->monster->initial_position[1] << " can see hero" << std::endl;
-        // std::cout << "Hero: " << hero_position[0] << " " << hero_position[1] << std::endl;
     
     } else if (see_hero_sound->music_played && !can_see_hero){
         see_hero_sound->stop();

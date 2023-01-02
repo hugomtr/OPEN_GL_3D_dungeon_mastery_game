@@ -2,7 +2,7 @@
 
 void Lava::interact(Hero * _hero) {
     int life_hero = _hero->getLife();
-    life_hero -= 5;
+    life_hero -= 7;
     _hero->setLife(life_hero);
 
     if (life_hero <= 0) {
@@ -11,5 +11,6 @@ void Lava::interact(Hero * _hero) {
     } 
     _hero->getCamera()->lightColor = glm::vec3(1.0f,0.5f,0.5f);
     _hero->type_timer = LAVA_TIMER;
-    // renderer.time_attributes = 5; // attributes from renderer that say how much time renderer need to render by this attributes
+
+    lava_sound->play();
 };

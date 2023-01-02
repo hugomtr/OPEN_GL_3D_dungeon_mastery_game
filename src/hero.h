@@ -29,7 +29,7 @@ protected:
         camera = _camera;
         curr_position = camera->cameraMapCoordinates;
         weapon = std::make_unique<Sword>();
-        life = 20;
+        life = 25;
     }    
     static Hero * hero;
 public:
@@ -75,6 +75,7 @@ public:
 class Lava : public ITerrainLogic {
 public:
     void interact(Hero * _hero) override;
+    Sound * lava_sound = new Sound("../ressources/music/lava.wav");
 };
 
 class Exit : public ITerrainLogic {
@@ -85,11 +86,13 @@ public:
 class Flask : public ITerrainLogic {
 public:
     void interact(Hero * _hero) override;
+    Sound * flask_sound = new Sound("../ressources/music/flask.wav");
 };
 
 class Rosetta : public ITerrainLogic {
 private:
     void interact(Hero * _hero);
+    Sound * rosetta_sound = new Sound("../ressources/music/rosetta.wav");
 };
 
 #endif

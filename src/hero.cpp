@@ -94,19 +94,16 @@ void Hero::attack_monster(){
         bool look_in_monster_direction = ((curr_position[0] + camera->Front[0]) == this->monster->curr_position[0]) && ((curr_position[1] + camera->Front[2]) == this->monster->curr_position[1]);
         bool enough_stamina = STAMINA > weapon->stamina_needed;
 
-        //std::cout << "Monster targeted curr position: hero" << curr_position[0] + camera->Front[0] << " " <<curr_position[1] + camera->Front[1]<< "monster: " << this->monster->curr_position[0] << " " << this->monster->curr_position[1] <<std::endl;
         if (ready_to_attack_monster && look_in_monster_direction){
             weapon->attack(monster);
-            std::cout << STAMINA <<std::endl;
             STAMINA -= weapon->stamina_needed;
-            std::cout << STAMINA <<std::endl;
-            //std::cout << "Hero attack Monster Yaa!! with weapon : " << weapon_type << " monster life: " << monster->getLife() << std::endl;
+
         }
     }
 }
 
 void Hero::change_attributes_according_to_life(){
-    float lambda = life / 20.0f;
+    float lambda = life / 25.0f;
     float value = ( 1.0f - lambda ) * 5.0f + lambda * 25.0f;
     if (life <= 0) {
         value = 3.0;

@@ -22,13 +22,15 @@ void Flask::interact(Hero * hero) {
 
     if(!is_already_visited){
         hero->flasks_visited.push_back(std::vector<int>{x,y});
-        life_hero += 3;
-        if (life_hero > 20) {
-          hero->setLife(20);
+        life_hero += 5;
+        if (life_hero > 25) {
+          hero->setLife(25);
         } else {
           hero->setLife(life_hero);
         }
         hero->getCamera()->lightColor = glm::vec3(0.7f,0.7f,1.0f);
         hero->type_timer = FLASK_TIMER;
+        
+        flask_sound->play();
     } 
 };

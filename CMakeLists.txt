@@ -7,6 +7,7 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(lib/glad)
 add_subdirectory(lib/glfw)
 add_subdirectory(lib/glm)
+add_subdirectory(lib/freetype)
 
 find_package(ASSIMP REQUIRED)
 if(ASSIMP_FOUND)
@@ -26,6 +27,7 @@ target_link_libraries(OpenGLDungeonMastery
 	glad
 	glfw
 	glm
+	freetype
 	sfml-audio
 	${ASSIMP_LIBRARIES}
 	OpenGL::GL)

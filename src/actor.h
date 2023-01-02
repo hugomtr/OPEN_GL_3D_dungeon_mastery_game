@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "sound.h"
+#include "textRenderer.h"
 
 class IWeapon;
 
@@ -34,7 +35,7 @@ class Sword : public IWeapon {
     Sound * sword_sound = new Sound("../ressources/music/sword_hit.wav");
 public:
     Sword(){
-        stamina_needed = 0.25f;
+        stamina_needed = 0.3f;
     }
 
     void attack(Actor * actor) override {
@@ -51,7 +52,7 @@ class Cudgel : public IWeapon {
     Sound * cudgel_sound = new Sound("../ressources/music/cudgel_hit.wav");
 public:
     Cudgel(){
-        stamina_needed = 0.5f;
+        stamina_needed = 0.6f;
     }
 
     void attack(Actor * actor) {

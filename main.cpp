@@ -1,10 +1,4 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "src/renderer.h"
 #include "src/hero.h"
@@ -77,6 +71,8 @@ int main()
     // Configure all OpenGL states
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     const GLubyte* vendor_mod = glGetString(GL_VENDOR); // Returns the vendor
     const GLubyte* renderer_mod = glGetString(GL_RENDERER); // Returns a hint to the model
@@ -130,6 +126,8 @@ int main()
     main_sound.play();
     main_sound.loop();
 
+    TextRenderer text_renderer;
+
     while(!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -169,8 +167,10 @@ int main()
 
         if ((hero->STAMINA + deltaTime) < 1)
             hero->STAMINA += deltaTime;
+
         // input
         // -----
+        
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
@@ -182,6 +182,11 @@ int main()
         }
         renderer.renderRosettaStone(basic_shader,rosetta);
         renderer.renderWeapons(normal_specular_emission_shader,weapons);
+
+        text_renderer.display("Life : " + std::to_string(hero->getLife()) + " / 25  Stamina : " + std::to_string(int((hero->STAMINA) * 10)) + " / 10 ",static_cast<float>(0.75*SCR_WIDTH),static_cast<float>(0.1*SCR_HEIGHT), 1.0f, glm::vec3(1.0, 0.8f, 0.2f));
+
+        if(hero->is_dead)
+                text_renderer.display("You die",static_cast<float>(0.45*SCR_WIDTH),static_cast<float>(0.45*SCR_HEIGHT), 1.0f, glm::vec3(1.0, 0.2f, 0.2f));
 
         glfwSwapBuffers(window);
         glfwPollEvents();

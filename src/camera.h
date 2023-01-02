@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "map.h"
+#include "textRenderer.h"
 
 #include <vector>
 
@@ -29,8 +30,8 @@ const float NEAR = 0.1f;
 const float FAR  = 100.0f;
 
 // settings screen for projection matrix
-const unsigned int SCR_WIDTH = 1000;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1980;
+const unsigned int SCR_HEIGHT = 1080;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
 class Camera
@@ -64,7 +65,6 @@ public:
     float MouseSensitivity;
     float Zoom;
     float vision_coeff = 50.0f;
-    
     // get Instance of Camera
     static Camera * getInstance();
     void operator=(Camera & _other) = delete;
