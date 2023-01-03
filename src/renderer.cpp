@@ -371,7 +371,7 @@ void Renderer::renderRosettaStone(Shader &shader,Model &model3d)
     projection = camera->GetProjectionMatrix();
 
     shader.use();
-    shader.setInt("diffuseMap", 10);
+    shader.setInt("diffuseMap", 0);
     shader.setMat4f("projection", glm::value_ptr(projection));
     shader.setMat4f("view", glm::value_ptr(view));
 

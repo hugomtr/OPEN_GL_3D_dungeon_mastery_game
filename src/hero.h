@@ -40,7 +40,8 @@ public:
     static float STAMINA;
     int type_timer = 0;
     Sound * die_sound = new Sound("../ressources/music/die.wav");
-    bool is_dead = false;    
+    bool is_dead = false;  
+    bool won = false;  
     void incrementTimer(int type_timer);
     
     Hero(Hero & _other) = delete;

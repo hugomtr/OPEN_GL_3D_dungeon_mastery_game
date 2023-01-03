@@ -102,8 +102,6 @@ void Monster::process_turn() {
 
         if (ready_to_attack_hero){
             weapon->attack(hero);
-            std::cout << "Monster attack hero " << this->initial_position[0] << this->initial_position[1] << std::endl;
-            std::cout << "hero life " << hero->getLife() << std::endl;
             hero->getCamera()->lightColor = glm::vec3(1.0f,0.5f,0.5f);
             hero->type_timer = MONSTER_ATTACK_TIMER;
         } else {

@@ -19,6 +19,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 Hero * hero = Hero::getInstance();
 Camera * camera = Camera::getInstance();
 Renderer renderer;
+bool game_continue;
+
 
 bool firstMouse = true;
 float lastX =  SCR_WIDTH / 2.0f;
@@ -127,12 +129,13 @@ int main()
     main_sound.loop();
 
     TextRenderer text_renderer;
-
     while(!glfwWindowShouldClose(window))
     {
         // per-frame time logic
         // --------------------
         processInput(window);
+
+        game_continue = !(hero->is_dead) && !(hero->won);
 
         float currentFrame = static_cast<float>(glfwGetTime());
         
@@ -144,7 +147,7 @@ int main()
         if (accumulateTimeMonsterMovement > 1.0) {
             accumulateTimeMonsterMovement = 0.0;
             for (Monster & monster : monsters_list){
-                if (!hero->is_dead){
+                if (game_continue){
                     monster.process_turn();
                     if (monster.is_dead){
                         std::cout << "monster died" <<std::endl;
@@ -165,6 +168,7 @@ int main()
         accumulateTimeHeroMovement += deltaTime;
         lastFrame = currentFrame;
 
+
         if ((hero->STAMINA + deltaTime) < 1)
             hero->STAMINA += deltaTime;
 
@@ -174,19 +178,22 @@ int main()
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
+        renderer.renderRosettaStone(basic_shader,rosetta);
+        renderer.renderWeapons(normal_specular_emission_shader,weapons);
         renderer.renderMaze(normal_parallax_shader,texture_maze_ids);
         renderer.renderFlasks(normal_specular_emission_shader,flask);
         renderer.renderLava(lavaShader,lavaTex.ids);
         for (Monster & monster : monsters_list){
             renderer.renderMonster(normal_specular_emission_shader,monster_model,monster);
         }
-        renderer.renderRosettaStone(basic_shader,rosetta);
-        renderer.renderWeapons(normal_specular_emission_shader,weapons);
 
         text_renderer.display("Life : " + std::to_string(hero->getLife()) + " / 25  Stamina : " + std::to_string(int((hero->STAMINA) * 10)) + " / 10 ",static_cast<float>(0.75*SCR_WIDTH),static_cast<float>(0.1*SCR_HEIGHT), 1.0f, glm::vec3(1.0, 0.8f, 0.2f));
 
         if(hero->is_dead)
                 text_renderer.display("You die",static_cast<float>(0.45*SCR_WIDTH),static_cast<float>(0.45*SCR_HEIGHT), 1.0f, glm::vec3(1.0, 0.2f, 0.2f));
+
+        if(hero->won)
+                text_renderer.display("Well done",static_cast<float>(0.45*SCR_WIDTH),static_cast<float>(0.45*SCR_HEIGHT), 1.0f, glm::vec3(1.0f, 1.0f, 0.8f));
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -217,7 +224,7 @@ void processchangeDirection(GLFWwindow *window)
 }
 
 void processMovement(GLFWwindow *window) {
-    if (!hero->is_dead){
+    if (game_continue){
         hero->process_turn();
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
             camera->process_movement();

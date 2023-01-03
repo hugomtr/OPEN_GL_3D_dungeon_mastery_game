@@ -104,7 +104,7 @@ void Hero::attack_monster(){
 
 void Hero::change_attributes_according_to_life(){
     float lambda = life / 25.0f;
-    float value = ( 1.0f - lambda ) * 5.0f + lambda * 25.0f;
+    float value = ( 1.0f - lambda ) * 5.0f + lambda * 20.0f;
     if (life <= 0) {
         value = 3.0;
         is_dead = true;
