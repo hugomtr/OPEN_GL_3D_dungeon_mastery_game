@@ -41,16 +41,17 @@ void Hero::process_input_user(){
     
     x += curr_position[0];
     y += curr_position[1];
-    
-    if ((x < 30) && (y < 30) && (x >= 0) && (y >= 0)){
-        curr_position[0] = x;
-        curr_position[1] = y;
-    }
 
     Map* map = Map::getInstance();
     std::vector<std::vector<int>> maze = map->getMap();
 
-    int value = maze[curr_position[0]][curr_position[1]];
+    int value = maze[x][y];
+    
+    if ((x < 30) && (y < 30) && (x >= 0) && (y >= 0) && (value != 0)){
+        curr_position[0] = x;
+        curr_position[1] = y;
+    }
+
     switch (value)
     {
     case 4:
