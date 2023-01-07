@@ -235,10 +235,12 @@ void processMovement(GLFWwindow *window) {
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !hero->is_dead)
-    {
-        if (hero->STAMINA > hero->getWeapon()->stamina_needed)
-            hero->attack_monster();
+    if (hero->monster != nullptr){
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && !hero->is_dead)
+        {
+            if (hero->STAMINA > hero->getWeapon()->stamina_needed)
+                hero->attack_monster();
+        }
     }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS && !hero->is_dead)
     {
